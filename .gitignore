@@ -5,6 +5,7 @@ x64/
 x86/
 bbin/
 obj/
+bin/
 
 # === IDE & Tooling Specifics ===
 .vs/
