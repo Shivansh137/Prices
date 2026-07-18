@@ -1,0 +1,16 @@
+# Ignore local compilation artifacts
+**/bin
+**/obj
+
+# Ignore source control metadata
+.git
+.gitignore
+
+# Ignore IDE configurations
+.vs
+.vscode
+
+# Ignore configuration and documentation files unneeded at runtime
+Dockerfile
+Jenkinsfile
+README.md

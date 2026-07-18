@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+option csharp_namespace = "PricesService";
+
+package prices;
+
+// The pricing engine service definition.
+service PriceCalculator {
+  // Returns the price for a specific product ID
+  rpc GetPrice (PriceRequest) returns (PriceResponse);
+}
+
+// The request message containing the target product identifier.
+message PriceRequest {
+  string id = 1;
+}
+
+// The response message containing the price details.
+message PriceResponse {
+  string id = 1;
+  double price = 2;
+}

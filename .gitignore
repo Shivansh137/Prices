@@ -1,0 +1,21 @@
+# === Development & Build Outputs ===
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+bbin/
+obj/
+
+# === IDE & Tooling Specifics ===
+.vs/
+.vscode/
+*.suo
+*.user
+*.sln.docstates
+
+# === OS Generated Files ===
+.DS_Store
+Thumbs.db
+
+# === Docker/Local Infrastructure Trash ===
+.dockerignore.msbuild
