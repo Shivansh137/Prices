@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         // Points to the registry container running on the shared Docker network
-        REGISTRY   = "local-registry:5000"
+        REGISTRY   = "localhost:5001"
         IMAGE_NAME = "prices-service"
         TAG        = "${BUILD_NUMBER}"
     }
