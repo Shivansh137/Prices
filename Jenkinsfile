@@ -2,72 +2,70 @@ pipeline {
     agent any
 
     environment {
-        // Points to the registry container running on the shared Docker network
         REGISTRY   = "localhost:5001"
         IMAGE_NAME = "prices-service"
         TAG        = "${BUILD_NUMBER}"
     }
 
     stages {
-        stage('Sanity Check') {
-            steps {
-                echo "Verifying environment capabilities..."
-                // Verify Jenkins can talk to the host's Docker engine
-                sh 'docker version'
-            }
-        }
-
         stage('Checkout Code') {
             steps {
-                // Pulls the latest commits from your GitHub repository automatically
                 checkout scm
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Continuous Integration (Tests)') {
             steps {
                 script {
-                    echo "Starting build for image: ${IMAGE_NAME}:${TAG}"
-                    
-                    // Triggers the multi-stage Dockerfile build step
+                    echo "Executing Unit Tests inside Docker..."
+                    // The --target flag stops the Dockerfile execution at the 'test' stage.
+                    // If 'dotnet test' fails inside the container, Jenkins throws an error here.
+                    sh "docker build --target test -t ${IMAGE_NAME}-test-env ."
+                }
+            }
+        }
+
+        stage('Continuous Delivery (Build)') {
+            steps {
+                script {
+                    echo "Tests Passed! Building the final production image..."
+                    // Because Docker caches layers, this will instantly skip the restore/build steps 
+                    // and jump straight to the publish and final runtime stages.
                     sh "docker build -t ${REGISTRY}/${IMAGE_NAME}:${TAG} ."
-                    
-                    // Also tag it as 'latest' for local development ease
                     sh "docker tag ${REGISTRY}/${IMAGE_NAME}:${TAG} ${REGISTRY}/${IMAGE_NAME}:latest"
                 }
             }
         }
 
-        stage('Push to Private Registry') {
+        stage('Deploy to Private Registry') {
             steps {
                 script {
-                    echo "Pushing built images to our local registry..."
-                    
-                    // Push the unique build number tag
+                    echo "Uploading verified artifact to the registry..."
                     sh "docker push ${REGISTRY}/${IMAGE_NAME}:${TAG}"
-                    
-                    // Push the latest tag
                     sh "docker push ${REGISTRY}/${IMAGE_NAME}:latest"
                 }
             }
         }
 
-        stage('Clean Up Workspace') {
+        stage('Clean Up') {
             steps {
-                echo "Cleaning up local images from host to save space..."
-                // Removes local references so your laptop disk space isn't consumed
-                sh "docker rmi ${REGISTRY}/${IMAGE_NAME}:${TAG}"
-                sh "docker rmi ${REGISTRY}/${IMAGE_NAME}:latest"
+                script {
+                    echo "Sweeping up temporary images..."
+                    sh "docker rmi ${REGISTRY}/${IMAGE_NAME}:${TAG}"
+                    sh "docker rmi ${REGISTRY}/${IMAGE_NAME}:latest"
+                    // The || true prevents the pipeline from failing if the test image was already removed
+                    sh "docker rmi ${IMAGE_NAME}-test-env || true" 
+                }
             }
         }
     }
 
     post {
         success {
-            echo "Successfully built and pushed ${IMAGE_NAME} to the local architecture ecosystem!"
+            echo "✅ CI/CD Pipeline Complete: Code tested, built, and deployed!"
         }
         failure {
-            echo "Pipeline failed. Check the compilation step or Docker daemon connectivity above."
+            echo "❌ Pipeline Failed: Check the test output or build logs above."
         }
     }
 }

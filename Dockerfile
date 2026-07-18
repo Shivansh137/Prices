@@ -1,19 +1,28 @@
-# Stage 1: Build the binary inside an SDK container environment
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copy project file and restore dependencies to exploit layer caching optimizations
-COPY ["PricesService.csproj", "."]
-RUN dotnet restore
-
-# Copy all files and compile binaries for production release
+# Copy everything and restore via the solution file
 COPY . .
-RUN dotnet publish -c Release -o /app/publish
+RUN dotnet restore Prices.sln
 
-# Stage 2: Create runtime container image with stripped down dependency footprint
+# ==========================================
+# CI STAGE: Run unit tests
+# ==========================================
+FROM build AS test
+# If this fails, the entire pipeline stops immediately.
+RUN dotnet test Tests/Tests.csproj -c Release
+
+# ==========================================
+# CD STAGE: Publish the compiled API
+# ==========================================
+FROM build AS publish
+RUN dotnet publish PricesService.csproj -c Release -o /app/publish
+
+# ==========================================
+# FINAL RUNTIME STAGE
+# ==========================================
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
-COPY --from=build /app/publish .
-
+COPY --from=publish /app/publish .
 EXPOSE 8080
 ENTRYPOINT ["dotnet", "PricesService.dll"]
