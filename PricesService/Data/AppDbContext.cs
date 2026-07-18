@@ -8,7 +8,8 @@ public class AppDbContext : DbContext
 
     public DbSet<CarPrice> CarPrices { get; set; }
 
-    protected override void OnModelCreating(ModelCreatingBuilder modelBuilder)
+    // FIXED: Changed ModelCreatingBuilder to ModelBuilder
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
