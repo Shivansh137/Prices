@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prices-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: prices-app
+  template:
+    metadata:
+      labels:
+        app: prices-app
+    spec:
+      containers:
+      - name: prices-container
+        image: localhost:5001/prices-service:latest
+        imagePullPolicy: Never 
+        ports:
+        - containerPort: 8080
+        env:
+        - name: ConnectionStrings__DefaultConnection
+          value: "server=mysql-service;port=3306;database=CarPricesDb;user=root;password=SuperSecretPassword123!;"

@@ -1,19 +1,32 @@
 using Grpc.Core;
-using PricesService;
+using Microsoft.EntityFrameworkCore;
+using PricesService.Data;
 
 namespace PricesService.Services;
 
 public class PriceService : PriceCalculator.PriceCalculatorBase
 {
-    public override Task<PriceResponse> GetPrice(PriceRequest request, ServerCallContext context)
-    {
-        // Production applications pull from DB/Cache. For this setup, we mock it.
-        double targetPrice = request.Id == "item-100" ? 99.99 : 19.50;
+    private readonly AppDbContext _dbContext;
 
-        return Task.FromResult(new PriceResponse
+    public PriceService(AppDbContext dbContext)
+    {
+        _dbContext = dbContext;
+    }
+
+    public override async Task<PriceResponse> GetPrice(PriceRequest request, ServerCallContext context)
+    {
+        // Query MySQL for the exact car ID
+        var car = await _dbContext.CarPrices.FirstOrDefaultAsync(c => c.Id == request.Id);
+
+        if (car == null)
         {
-            Id = request.Id,
-            Price = targetPrice
-        });
+            throw new RpcException(new Status(StatusCode.NotFound, $"Car with ID '{request.Id}' not found."));
+        }
+
+        return new PriceResponse
+        {
+            Id = car.Id,
+            Price = car.Price
+        };
     }
 }
