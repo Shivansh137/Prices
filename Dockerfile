@@ -16,7 +16,7 @@ RUN dotnet test Tests/Tests.csproj -c Release
 # CD STAGE: Publish the compiled API
 # ==========================================
 FROM build AS publish
-RUN dotnet publish PricesService.csproj -c Release -o /app/publish
+RUN dotnet publish PricesService/PricesService.csproj -c Release -o /app/publish
 
 # ==========================================
 # FINAL RUNTIME STAGE
